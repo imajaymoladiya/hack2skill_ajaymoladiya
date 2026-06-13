@@ -1,6 +1,7 @@
 # ChefFlow AI 🍲
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/imajaymoladiya/hack2skill_ajaymoladiya)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/imajaymoladiya/hack2skill_ajaymoladiya)
 
 ChefFlow AI is a premium, responsive single-page web application designed to help users structure their daily meal plans (Breakfast, Lunch, Dinner), manage interactive cooking checklists, organize a categorized grocery shopping list, and evaluate budget feasibility. 
 
