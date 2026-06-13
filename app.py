@@ -1,18 +1,35 @@
 import os
 import json
+import re
+import logging
 from flask import Flask, request, jsonify, render_template
 from dotenv import load_dotenv
+
+# Initialize logging structure
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Initialize dotenv to read keys from .env file
 load_dotenv()
 
 # Initialize Flask app
-# By default, we place HTML files inside templates/ and CSS/JS inside static/
 app = Flask(
     __name__,
     template_folder="templates",
     static_folder="static"
 )
+
+# Apply secure headers after each request
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    return response
 
 # Fetch the Groq API key from environment
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
@@ -29,12 +46,12 @@ if has_real_groq_key:
     try:
         from groq import Groq
         groq_client = Groq(api_key=GROQ_API_KEY)
-        print("[SUCCESS] Groq client successfully initialized.")
+        logger.info("Groq client successfully initialized.")
     except ImportError:
-        print("[WARN] Warning: 'groq' package is not installed. Will use fallback database.")
+        logger.warning("Warning: 'groq' package is not installed. Will use fallback database.")
         has_real_groq_key = False
 else:
-    print("[INFO] Running in Local Rule-Based Mode. Please set a valid GROQ_API_KEY in the .env file for dynamic generations.")
+    logger.info("Running in Local Rule-Based Mode. Please set a valid GROQ_API_KEY in the .env file for dynamic generations.")
 
 # --- LOCAL RULE-BASED FALLBACK DATABASE ---
 # Serves high-quality responses even if no Groq API Key is configured.
@@ -373,6 +390,36 @@ def generate():
     budget = data.get("budget", "eco")
     pantry = data.get("pantry", [])
     
+    # STRICT PARAMETER VALIDADORS (Enum Guarding)
+    allowed_schedules = {"hectic", "balanced", "leisurely"}
+    allowed_dietary = {"none", "vegetarian", "vegan", "keto", "gluten-free"}
+    allowed_budgets = {"eco", "mid", "lux"}
+    
+    if schedule not in allowed_schedules:
+        return jsonify({"error": "Invalid schedule parameter value"}), 400
+    if dietary not in allowed_dietary:
+        return jsonify({"error": "Invalid dietary parameter value"}), 400
+    if budget not in allowed_budgets:
+        return jsonify({"error": "Invalid budget parameter value"}), 400
+    if not isinstance(pantry, list):
+        return jsonify({"error": "Invalid pantry items parameter value"}), 400
+        
+    # PANTRY TAG SANITIZATION & PROMPT INJECTION PREVENTION
+    sanitized_pantry = []
+    for item in pantry[:15]: # Cap at 15 tags max
+        if not isinstance(item, str):
+            continue
+        # Truncate tag length to 30 characters
+        item = item[:30]
+        # Remove everything except standard letters, numbers, spaces, and dashes
+        item = re.sub(r'[^a-zA-Z0-9\s-]', '', item)
+        # Strip injection instruction keywords
+        item = re.sub(r'(?i)\b(system|ignore|instructions|prompt|api|override|user|role|delete|drop|update)\b', '', item)
+        item = item.strip()
+        if item:
+            sanitized_pantry.append(item)
+    pantry = sanitized_pantry
+    
     # Determine budget limit dollar value
     limit_val = 15.0
     if budget == "mid":
@@ -383,7 +430,7 @@ def generate():
     # If the user has a valid Groq API Key, run dynamic LLM generation
     if has_real_groq_key:
         try:
-            print("[INFO] Fetching live plan from Groq model: llama-3.3-70b-versatile...")
+            logger.info("Fetching live plan from Groq model: llama-3.3-70b-versatile...")
             
             pantry_str = ", ".join(pantry) if pantry else "None specified"
             
@@ -527,7 +574,7 @@ def generate():
             return jsonify(response_payload)
             
         except Exception as e:
-            print(f"[ERROR] Error during Groq API execution: {str(e)}. Falling back to local data.")
+            logger.error(f"Error during Groq API execution: {str(e)}. Falling back to local data.")
             # Fall back to local processing if API fails or throws errors
             local_fallback = process_local_recipe_generation(schedule, dietary, budget, pantry)
             local_fallback["meta"]["api_error"] = str(e)
@@ -535,7 +582,7 @@ def generate():
             
     else:
         # If no key, process and serve local recipe database matching input values
-        print("[INFO] Processing request using local rule-based database...")
+        logger.info("Processing request using local rule-based database...")
         plan = process_local_recipe_generation(schedule, dietary, budget, pantry)
         return jsonify(plan)
 

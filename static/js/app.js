@@ -5,6 +5,20 @@ let currentPlan = null;
 let currentMealTab = 'breakfast';
 let pantryIngredients = [];
 
+// Secure HTML escaping helper for XSS prevention
+function escapeHTML(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/[&<>'"]/g, 
+    tag => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[tag] || tag)
+  );
+}
+
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
   initPantryTags();
@@ -80,13 +94,17 @@ function addPantryTag(name) {
   const container = document.getElementById('pantry-tags-container');
   const input = document.getElementById('pantry-raw-input');
   
-  const cleanName = name.toLowerCase();
+  // Clean, sanitize, and limit length
+  let cleanName = name.trim().toLowerCase();
+  cleanName = cleanName.substring(0, 30).replace(/[^a-zA-Z0-9\s-]/g, '');
+  if (!cleanName || pantryIngredients.includes(cleanName)) return;
+  
   pantryIngredients.push(cleanName);
 
   const tag = document.createElement('span');
   tag.className = 'tag';
   tag.dataset.value = cleanName;
-  tag.innerHTML = `${name} <span class="tag-remove">&times;</span>`;
+  tag.innerHTML = `${escapeHTML(cleanName)} <span class="tag-remove">&times;</span>`;
 
   tag.querySelector('.tag-remove').addEventListener('click', () => {
     pantryIngredients = pantryIngredients.filter(item => item !== cleanName);
@@ -250,7 +268,7 @@ function createChecklistItem(id, text) {
 
   label.innerHTML = `
     <div class="checkbox-custom"></div>
-    <span class="checklist-text">${text}</span>
+    <span class="checklist-text">${escapeHTML(text)}</span>
   `;
 
   label.addEventListener('click', (e) => {
@@ -306,7 +324,7 @@ function renderGroceries() {
 
       itemLabel.innerHTML = `
         <div class="checkbox-custom"></div>
-        <span class="checklist-text">${item.name} (${item.qty})${pantryLabel}</span>
+        <span class="checklist-text">${escapeHTML(item.name)} (${escapeHTML(item.qty)})${pantryLabel}</span>
       `;
 
       itemLabel.addEventListener('click', (e) => {
@@ -367,7 +385,7 @@ function renderBudgetFeasibility() {
     tipEl.innerHTML = `
       <div class="budget-tip-icon">💡</div>
       <div class="budget-tip-content">
-        <strong>${tip.strong}</strong> ${tip.text}
+        <strong>${escapeHTML(tip.strong)}</strong> ${escapeHTML(tip.text)}
       </div>
     `;
     tipsContainer.appendChild(tipEl);
@@ -389,10 +407,10 @@ function renderSubstitutions() {
     div.className = 'sub-item';
     div.innerHTML = `
       <div>
-        <span class="sub-original">${sub.original}</span>
-        <span style="color:var(--text-muted); font-size:0.75rem;">(${sub.reason})</span>
+        <span class="sub-original">${escapeHTML(sub.original)}</span>
+        <span style="color:var(--text-muted); font-size:0.75rem;">(${escapeHTML(sub.reason)})</span>
       </div>
-      <span class="sub-replacement">➔ ${sub.replacement}</span>
+      <span class="sub-replacement">➔ ${escapeHTML(sub.replacement)}</span>
     `;
     container.appendChild(div);
   });
