@@ -1,5 +1,7 @@
 # ChefFlow AI 🍲
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/imajaymoladiya/hack2skill_ajaymoladiya)
+
 ChefFlow AI is a premium, responsive single-page web application designed to help users structure their daily meal plans (Breakfast, Lunch, Dinner), manage interactive cooking checklists, organize a categorized grocery shopping list, and evaluate budget feasibility. 
 
 It is powered by a **Python Flask** backend and integrates with the **Groq Cloud API** using `llama-3.3-70b-versatile` in JSON mode, with a robust local rule-based fallback database.
