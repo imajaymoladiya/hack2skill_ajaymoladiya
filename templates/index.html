@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ChefFlow AI - Personal cooking to-do lists, meal planning, and budget feasibility tracker based on your day.">
+  <title>ChefFlow AI | Smart Meal Planner & Cooking To-Do List</title>
+  <link rel="stylesheet" href="/static/css/index.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo-container">
+      <span class="logo-icon">🍲</span>
+      <div>
+        <h1>ChefFlow AI</h1>
+        <p class="subtitle">Smart daily meal plans & cooking to-do lists</p>
+      </div>
+    </div>
+    <div class="settings-btn" id="backend-status-badge" style="cursor: default;">
+      <span>⚙️</span> Checking Server...
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main>
+    <div class="layout-grid">
+      
+      <!-- Input Sidebar -->
+      <section class="card config-card">
+        <h2 class="config-title">Tailor Your Day</h2>
+        
+        <form id="generator-form" onsubmit="event.preventDefault();">
+          
+          <!-- Schedule selector -->
+          <div class="form-group">
+            <label class="form-label">How is your day?</label>
+            <div class="btn-group-toggle">
+              <div class="toggle-item">
+                <input type="radio" id="sched-hectic" name="schedule" value="hectic" checked>
+                <label for="sched-hectic" class="toggle-label">
+                  <span class="toggle-label-icon">⚡</span>
+                  <span>Hectic</span>
+                </label>
+              </div>
+              <div class="toggle-item">
+                <input type="radio" id="sched-balanced" name="schedule" value="balanced">
+                <label for="sched-balanced" class="toggle-label">
+                  <span class="toggle-label-icon">📅</span>
+                  <span>Balanced</span>
+                </label>
+              </div>
+              <div class="toggle-item">
+                <input type="radio" id="sched-leisure" name="schedule" value="leisurely">
+                <label for="sched-leisure" class="toggle-label">
+                  <span class="toggle-label-icon">☕</span>
+                  <span>Leisurely</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Dietary selector -->
+          <div class="form-group">
+            <label class="form-label" for="dietary-select">Dietary Focus</label>
+            <select class="select-input" id="dietary-select" name="dietary">
+              <option value="none">Anything (No Restrictions)</option>
+              <option value="vegetarian">Vegetarian</option>
+              <option value="vegan">Vegan</option>
+              <option value="keto">Keto (Low Carb)</option>
+              <option value="gluten-free">Gluten-Free</option>
+            </select>
+          </div>
+
+          <!-- Budget selector -->
+          <div class="form-group">
+            <label class="form-label">Daily Budget Target</label>
+            <div class="btn-group-toggle">
+              <div class="toggle-item">
+                <input type="radio" id="budget-eco" name="budget" value="eco" checked>
+                <label for="budget-eco" class="toggle-label">
+                  <span class="toggle-label-icon">🪙</span>
+                  <span>Eco ($15)</span>
+                </label>
+              </div>
+              <div class="toggle-item">
+                <input type="radio" id="budget-mid" name="budget" value="mid">
+                <label for="budget-mid" class="toggle-label">
+                  <span class="toggle-label-icon">💵</span>
+                  <span>Mid ($30)</span>
+                </label>
+              </div>
+              <div class="toggle-item">
+                <input type="radio" id="budget-lux" name="budget" value="lux">
+                <label for="budget-lux" class="toggle-label">
+                  <span class="toggle-label-icon">💎</span>
+                  <span>Gourmet ($60)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pantry Inventory -->
+          <div class="form-group">
+            <label class="form-label" for="pantry-raw-input">Ingredients to use up</label>
+            <div class="tags-input-container" id="pantry-tags-container">
+              <input type="text" class="tags-raw-input" id="pantry-raw-input" placeholder="Type ingredient & press Enter">
+            </div>
+          </div>
+          
+          <!-- CTA Button -->
+          <button type="button" class="generate-btn" id="generate-plan-btn">
+            <span class="generate-btn-icon">✨</span> Generate Meal Plan
+          </button>
+
+        </form>
+      </section>
+
+      <!-- Dynamic Output Panel -->
+      <section class="output-container">
+        
+        <!-- State 1: Placeholder View -->
+        <div class="placeholder-view" id="state-placeholder">
+          <div class="placeholder-icon">🥗</div>
+          <h2>Your Culinary Assistant Awaits</h2>
+          <p>Tell us about your schedule, budget target, and dietary needs. ChefFlow AI will design a perfect daily plan with custom to-do lists and grocery lists.</p>
+        </div>
+
+        <!-- State 2: Loading / Processing View -->
+        <div class="loading-view" id="state-loading">
+          <div class="loader-ring">
+            <div></div><div></div><div></div><div></div>
+            <span class="loader-glow">🍳</span>
+          </div>
+          <h2>Creating Chef Plan...</h2>
+          <div class="loading-steps">
+            <div class="loading-step" id="load-step-1">
+              <div class="loading-step-bullet"></div>
+              <span>Analyzing your schedule & limits...</span>
+            </div>
+            <div class="loading-step" id="load-step-2">
+              <div class="loading-step-bullet"></div>
+              <span>Composing custom balanced recipes...</span>
+            </div>
+            <div class="loading-step" id="load-step-3">
+              <div class="loading-step-bullet"></div>
+              <span>Matching budget & grocery pricing...</span>
+            </div>
+            <div class="loading-step" id="load-step-4">
+              <div class="loading-step-bullet"></div>
+              <span>Assembling interactive cooking to-do lists...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- State 3: Generated Results View -->
+        <div class="results-view" id="state-results">
+          
+          <!-- Results Actions -->
+          <div class="results-header">
+            <div class="results-title-group">
+              <h2 id="plan-headline-title">Your Custom Daily Flow Plan</h2>
+              <p id="plan-headline-desc">Optimized for a Hectic day, Vegetarian, $15.00 limit.</p>
+            </div>
+            <div class="action-buttons">
+              <button class="action-btn" id="export-copy-btn">📋 Copy Plan</button>
+              <button class="action-btn" id="export-print-btn">🖨️ Print Plan</button>
+            </div>
+          </div>
+
+          <!-- Tabs for Breakfast / Lunch / Dinner -->
+          <div class="card">
+            <div class="meal-tabs">
+              <button class="meal-tab-btn active" data-meal="breakfast">🌅 Breakfast</button>
+              <button class="meal-tab-btn" data-meal="lunch">☀️ Lunch</button>
+              <button class="meal-tab-btn" data-meal="dinner">🌙 Dinner</button>
+            </div>
+
+            <!-- Single Meal Display Card -->
+            <div class="meal-showcase">
+              <!-- Left Side: Image with visual title overlay -->
+              <div class="meal-image-card" id="meal-card-image" style="background-image: url('https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=400&q=80');">
+                <div class="meal-gradient-overlay"></div>
+                <div class="meal-meta-badge-overlay" id="meal-card-tag">15 Min • Easy</div>
+                <div class="meal-title-overlay">
+                  <div class="meal-type-lbl" id="meal-card-type">Breakfast</div>
+                  <div class="meal-title-lbl" id="meal-card-title">Avocado Toast & Poached Egg</div>
+                </div>
+              </div>
+
+              <!-- Right Side: Details & Cooking checklists -->
+              <div class="meal-recipe-details">
+                <div class="stats-row">
+                  <div class="stat-box">
+                    <span class="stat-icon">⏱️</span>
+                    <div>
+                      <div class="stat-value" id="meal-card-time">15 mins</div>
+                      <div class="stat-label">Total Time</div>
+                    </div>
+                  </div>
+                  <div class="stat-box">
+                    <span class="stat-icon">🔥</span>
+                    <div>
+                      <div class="stat-value" id="meal-card-calories">340 kcal</div>
+                      <div class="stat-label">Energy</div>
+                    </div>
+                  </div>
+                  <div class="stat-box">
+                    <span class="stat-icon">🥣</span>
+                    <div>
+                      <div class="stat-value" id="meal-card-difficulty">Easy</div>
+                      <div class="stat-label">Difficulty</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Cooking Tasks (To-Do Lists) -->
+                <div class="cooking-section">
+                  <div class="todo-group">
+                    <h4><span>🔪</span> Prep Steps</h4>
+                    <div class="checklist" id="meal-prep-checklist">
+                      <!-- Dynamically added -->
+                    </div>
+                  </div>
+                  <div class="todo-group">
+                    <h4><span>🔥</span> Active Cooking Steps</h4>
+                    <div class="checklist" id="meal-cook-checklist">
+                      <!-- Dynamically added -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Secondary Grid: Grocery Lists & Feasibility/Substitutions -->
+          <div class="secondary-grid">
+            
+            <!-- Grocery List -->
+            <div class="card grocery-card">
+              <h3 class="config-title" style="margin-bottom: 0.5rem;">🛒 Grocery Shopping List</h3>
+              <p class="subtitle" style="margin-bottom: 1rem;">Click items to check off once purchased or found in pantry.</p>
+              
+              <div class="grocery-categories" id="grocery-list-container">
+                <!-- Grouped Categories injected via JavaScript -->
+              </div>
+            </div>
+
+            <!-- Budget Feasibility & Substitutions -->
+            <div class="card budget-card">
+              <h3 class="config-title" style="margin-bottom: 0.5rem;">📊 Cost Feasibility</h3>
+              
+              <!-- Target vs Actual Metric -->
+              <div class="budget-metric-box">
+                <div class="budget-val-col">
+                  <p>ESTIMATED TOTAL COST</p>
+                  <h3 id="budget-est-cost">$12.50</h3>
+                </div>
+                <div class="feasibility-status">
+                  <span class="feasibility-badge status-under" id="feasibility-rating-badge">ON BUDGET</span>
+                </div>
+              </div>
+
+              <!-- Graphic Gauge -->
+              <div class="gauge-bar-container">
+                <div class="gauge-bar-fill" id="budget-gauge-fill" style="width: 75%;"></div>
+              </div>
+
+              <!-- Budget Optimization Advice -->
+              <div class="budget-tips-container">
+                <div class="budget-tips-title">💡 Budget Optimization Tips</div>
+                <div id="budget-tips-list">
+                  <!-- Dynamic content -->
+                </div>
+              </div>
+
+              <!-- Interactive Substitution panel -->
+              <div class="substitutions-panel">
+                <h5><span>🔄</span> Smart Substitutions</h5>
+                <div class="sub-list" id="substitutions-list">
+                  <!-- Dynamic substitutions -->
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Toast feedback notifications -->
+  <div class="toast" id="toast-notification">
+    <span class="toast-icon">✓</span>
+    <span id="toast-message">Plan Saved Successfully!</span>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
