@@ -29,12 +29,12 @@ if has_real_groq_key:
     try:
         from groq import Groq
         groq_client = Groq(api_key=GROQ_API_KEY)
-        print("🍳 Groq client successfully initialized.")
+        print("[SUCCESS] Groq client successfully initialized.")
     except ImportError:
-        print("⚠️ Warning: 'groq' package is not installed. Will use fallback database.")
+        print("[WARN] Warning: 'groq' package is not installed. Will use fallback database.")
         has_real_groq_key = False
 else:
-    print("ℹ️ Info: Running in Local Rule-Based Mode. Please set a valid GROQ_API_KEY in the .env file for dynamic generations.")
+    print("[INFO] Running in Local Rule-Based Mode. Please set a valid GROQ_API_KEY in the .env file for dynamic generations.")
 
 # --- LOCAL RULE-BASED FALLBACK DATABASE ---
 # Serves high-quality responses even if no Groq API Key is configured.
@@ -383,7 +383,7 @@ def generate():
     # If the user has a valid Groq API Key, run dynamic LLM generation
     if has_real_groq_key:
         try:
-            print("🚀 Fetching live plan from Groq model: llama-3.3-70b-versatile...")
+            print("[INFO] Fetching live plan from Groq model: llama-3.3-70b-versatile...")
             
             pantry_str = ", ".join(pantry) if pantry else "None specified"
             
@@ -527,7 +527,7 @@ def generate():
             return jsonify(response_payload)
             
         except Exception as e:
-            print(f"❌ Error during Groq API execution: {str(e)}. Falling back to local data.")
+            print(f"[ERROR] Error during Groq API execution: {str(e)}. Falling back to local data.")
             # Fall back to local processing if API fails or throws errors
             local_fallback = process_local_recipe_generation(schedule, dietary, budget, pantry)
             local_fallback["meta"]["api_error"] = str(e)
@@ -535,7 +535,7 @@ def generate():
             
     else:
         # If no key, process and serve local recipe database matching input values
-        print("ℹ️ Processing request using local rule-based database...")
+        print("[INFO] Processing request using local rule-based database...")
         plan = process_local_recipe_generation(schedule, dietary, budget, pantry)
         return jsonify(plan)
 
